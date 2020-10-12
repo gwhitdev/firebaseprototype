@@ -3,6 +3,7 @@ const express = require('express'),
     bodyParser = require('body-parser'),
     cookieParser = require('cookie-parser'),
     admin  = require('firebase-admin'),
+    //{ verifySession, createSession } = require('./middleware/auth'),
     app = express();
 
 const serviceAccount = require('./serviceAccountKey.json');
@@ -42,36 +43,37 @@ app.get('/signup', (req, res) => {
 
 app.get('/profile', (req, res) => {
     const sessionCookie = req.cookies.session || "";
-
-    admin.auth()
-    .verifySessionCookie(sessionCookie, true /** checkRevoked */)
-    .then(() => {
-        res.render('profile');
-    })
-    .catch((error) => {
-        res.redirect('/login');
-    });
     
+        admin.auth()
+        .verifySessionCookie(sessionCookie, true /** checkRevoked */)
+        .then(() => {
+            res.render('profile');
+        })
+        .catch((error) => {
+            res.redirect('/login');
+        });
+
 });
 
 app.post('/sessionLogin', (req, res) => {
     const idToken = req.body.idToken.toString();
-
-    const expiresIn = 60*60*24*5 *1000;
-
-    admin
-    .auth()
-    .createSessionCookie(idToken, { expiresIn })
-    .then(
-        (sessionCookie) => {
-            const options = { maxAge: expiresIn, httpOnly: true };
-            res.cookie('session', sessionCookie, options);
-            res.end(JSON.stringify({ status: 'success' }));
-        },
-        (error) => {
-            res.status(401).send('Unavailable request');
-        }
-    );
+    
+        const expiresIn = 60*60*24*5 *1000;
+    
+        admin
+        .auth()
+        .createSessionCookie(idToken, { expiresIn })
+        .then(
+            (sessionCookie) => {
+                const options = { maxAge: expiresIn, httpOnly: true };
+                res.cookie('session', sessionCookie, options);
+                res.end(JSON.stringify({ status: 'success' }));
+            },
+            (error) => {
+                res.status(401).send('Unavailable request');
+            }
+        );
+   
 });
 
 app.get('/sessionLogout', (req, res)=> {
